@@ -25,6 +25,11 @@ public class GamePanel : MonoBehaviour
         letterWidth = letterPrefab.GetComponent<RectTransform>().rect.width;
         startWidth = letterWidth;
 
+        InitializeLetters();
+    }
+
+    private void InitializeLetters()
+    {
         maxColumns = Mathf.FloorToInt(rectTransform.rect.width / letterWidth);
         maxRows = Mathf.FloorToInt(rectTransform.rect.height / letterWidth);
 
@@ -38,7 +43,6 @@ public class GamePanel : MonoBehaviour
                 letters.Add(letter);
             }
         }
-
     }
 
     public void GenerateLetters()
@@ -50,18 +54,11 @@ public class GamePanel : MonoBehaviour
         rowsCount = rowsCount > maxRows ? maxRows : rowsCount;
 
         FormLetterSize();
-
-        if( letterTransforms!=null && letterTransforms.Count > 0)
-        {
-            foreach (var letter in letterTransforms)
-            {
-                Destroy(letter.gameObject);
-            }
-        }
+        DeactivateLetters();
 
         letterTransforms = new List<Transform>();
         Vector2 centerPos = new Vector2(-letterWidth * 0.5f, letterWidth * 0.5f);
-        Vector2 startPos = new Vector2(centerPos.x - letterWidth * (columsCount * 0.5f - 1), 
+        Vector2 startPos = new Vector2(centerPos.x - letterWidth * (columsCount * 0.5f - 1),
             centerPos.y + letterWidth * (rowsCount * 0.5f - 1));
 
         int k = 0;
@@ -69,21 +66,37 @@ public class GamePanel : MonoBehaviour
         {
             for (int j = 0; j < rowsCount; j++)
             {
-                Vector2 letterPos = new Vector2(startPos.x + letterWidth * i, startPos.y - letterWidth * j);
-                GameObject letter = letters[k];
-                letter.transform.SetParent(transform, false);
-                letter.transform.localPosition = letterPos;
-                letter.GetComponent<Letter>().SetUpLetter(multiplyIndex, letterWidth);
-                letter.SetActive(true);
-                letterTransforms.Add(letter.transform);
+                ActivateLetters(startPos, k, i, j);
                 k++;
             }
         }
     }
 
+    private void DeactivateLetters()
+    {
+        if (letterTransforms != null && letterTransforms.Count > 0)
+        {
+            foreach (var letter in letterTransforms)
+            {
+                letter.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    private void ActivateLetters(Vector2 startPos, int k, int i, int j)
+    {
+        Vector2 letterPos = new Vector2(startPos.x + letterWidth * i, startPos.y - letterWidth * j);
+        GameObject letter = letters[k];
+        letter.transform.SetParent(transform, false);
+        letter.transform.localPosition = letterPos;
+        letter.GetComponent<Letter>().SetUpLetter(multiplyIndex, letterWidth);
+        letter.SetActive(true);
+        letterTransforms.Add(letter.transform);
+    }
+
     public void ShuffleLetters()
     {
-        if (letterTransforms==null || letterTransforms.Count == 0)
+        if (letterTransforms==null || letterTransforms.Count < 2)
             return;
 
         List<Transform> takenTransforms = new List<Transform>();
@@ -96,8 +109,7 @@ public class GamePanel : MonoBehaviour
                 int posIndex = UnityEngine.Random.Range(0, letterTransforms.Count);
                 newTransform = letterTransforms[posIndex];
             }
-            while (takenTransforms.Contains(newTransform) ||
-            letter.transform==newTransform);
+            while (takenTransforms.Contains(newTransform));
 
             takenTransforms.Add(newTransform);
             letter.GetComponent<Letter>().ChangePosition(newTransform.position);

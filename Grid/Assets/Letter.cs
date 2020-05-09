@@ -20,13 +20,6 @@ public class Letter : MonoBehaviour
 
         InitializeLetterText();
     }
-    //private void Start()
-    //{
-    //    textMeshPro = GetComponent<TextMeshProUGUI>();
-    //    rectTransform = GetComponent<RectTransform>();
-
-    //    InitializeLetterText();
-    //}
 
     private void InitializeLetterText()
     {
@@ -43,12 +36,10 @@ public class Letter : MonoBehaviour
 
     IEnumerator ChangePositionRoutine(Vector3 newPos)
     {
-        float elapsedTime = 0f;
         Vector2 startPos = transform.position;
         for (float i = 0; i < moveTime; i += Time.deltaTime)
         {
-            elapsedTime += Time.deltaTime;
-            transform.position = Vector2.Lerp(startPos, newPos, elapsedTime);
+            transform.position = Vector2.Lerp(startPos, newPos, i/moveTime);
             yield return null;
         }
     }

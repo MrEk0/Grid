@@ -9,19 +9,36 @@ public class GamePanel : MonoBehaviour
 
     private int columsCount;
     private int rowsCount;
+    private int maxColumns;
+    private int maxRows;
     private float letterWidth;
-    private float letterHeight;
+    private float startWidth;
+    private float multiplyIndex;
+
     private RectTransform rectTransform;
-    private List<Transform> letters;
+    private List<Transform> letterTransforms;
+    private List<GameObject> letters;
 
     private void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
         letterWidth = letterPrefab.GetComponent<RectTransform>().rect.width;
-        letterHeight = letterPrefab.GetComponent<RectTransform>().rect.height;
+        startWidth = letterWidth;
 
-        int maxColumns = Mathf.FloorToInt(rectTransform.rect.width / letterWidth);
-        int maxRows = Mathf.FloorToInt(rectTransform.rect.height / letterHeight);
+        maxColumns = Mathf.FloorToInt(rectTransform.rect.width / letterWidth);
+        maxRows = Mathf.FloorToInt(rectTransform.rect.height / letterWidth);
+
+        letters = new List<GameObject>();
+        for (int i = 0; i < maxColumns; i++)
+        {
+            for (int j = 0; j < maxRows; j++)
+            {
+                GameObject letter = Instantiate(letterPrefab, transform);
+                letter.SetActive(false);
+                letters.Add(letter);
+            }
+        }
+
     }
 
     public void GenerateLetters()
@@ -29,40 +46,72 @@ public class GamePanel : MonoBehaviour
         if (rowsCount == 0 || columsCount == 0)
             return;
 
-        
-        letters = new List<Transform>();
-        Vector2 tempPos = new Vector2(-letterWidth * 0.5f, letterHeight * 0.5f);
-        Vector2 startPos = new Vector2(tempPos.x - letterWidth * (columsCount * 0.5f - 1), tempPos.y + letterHeight * (rowsCount * 0.5f - 1));
+        columsCount = columsCount > maxColumns ? maxColumns : columsCount;
+        rowsCount = rowsCount > maxRows ? maxRows : rowsCount;
 
+        FormLetterSize();
+
+        if( letterTransforms!=null && letterTransforms.Count > 0)
+        {
+            foreach (var letter in letterTransforms)
+            {
+                Destroy(letter.gameObject);
+            }
+        }
+
+        letterTransforms = new List<Transform>();
+        Vector2 centerPos = new Vector2(-letterWidth * 0.5f, letterWidth * 0.5f);
+        Vector2 startPos = new Vector2(centerPos.x - letterWidth * (columsCount * 0.5f - 1), 
+            centerPos.y + letterWidth * (rowsCount * 0.5f - 1));
+
+        int k = 0;
         for (int i = 0; i < columsCount; i++)
         {
             for (int j = 0; j < rowsCount; j++)
             {
-                Vector2 letterPos = new Vector2(startPos.x+letterWidth*i, startPos.y-letterHeight*j);
-                GameObject letter = Instantiate(letterPrefab, letterPos, Quaternion.identity);
+                Vector2 letterPos = new Vector2(startPos.x + letterWidth * i, startPos.y - letterWidth * j);
+                GameObject letter = letters[k];
                 letter.transform.SetParent(transform, false);
-                letters.Add(letter.transform);
+                letter.transform.localPosition = letterPos;
+                letter.GetComponent<Letter>().SetUpLetter(multiplyIndex, letterWidth);
+                letter.SetActive(true);
+                letterTransforms.Add(letter.transform);
+                k++;
             }
         }
     }
 
     public void ShuffleLetters()
     {
-        List<Transform> takenPositions = new List<Transform>();
+        if (letterTransforms==null || letterTransforms.Count == 0)
+            return;
+
+        List<Transform> takenTransforms = new List<Transform>();
         Transform newTransform;
 
-        foreach (var vector in letters)
-        { 
-            //do
-            //{
-                int posIndex = UnityEngine.Random.Range(0, letters.Count);
-                newTransform = letters[posIndex];
-            //}
-            //while (!takenPositions.Contains(newTransform));
-            Debug.Log(takenPositions.Contains(newTransform));
-            takenPositions.Add(newTransform);
-            vector.GetComponent<Letter>().ChangePosition(newTransform.position);
+        foreach (var letter in letterTransforms)
+        {
+            do
+            {
+                int posIndex = UnityEngine.Random.Range(0, letterTransforms.Count);
+                newTransform = letterTransforms[posIndex];
+            }
+            while (takenTransforms.Contains(newTransform) ||
+            letter.transform==newTransform);
+
+            takenTransforms.Add(newTransform);
+            letter.GetComponent<Letter>().ChangePosition(newTransform.position);
         }
+
+        letterTransforms.Clear();
+        letterTransforms.AddRange(takenTransforms);
+        takenTransforms.Clear();
+    }
+
+    private void FormLetterSize()
+    {
+        multiplyIndex = maxColumns / columsCount;
+        letterWidth = startWidth* multiplyIndex;
     }
 
     public void SetUpWidth(string width)

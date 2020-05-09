@@ -6,12 +6,34 @@ using TMPro;
 public class Letter : MonoBehaviour
 {
     [SerializeField] float moveTime = 2f;
-    private void Start()
+
+    private float fontSize;
+
+    private TextMeshProUGUI textMeshPro;
+    private RectTransform rectTransform;
+
+    private void Awake()
+    {
+        textMeshPro = GetComponent<TextMeshProUGUI>();
+        rectTransform = GetComponent<RectTransform>();
+        fontSize = textMeshPro.fontSize;
+
+        InitializeLetterText();
+    }
+    //private void Start()
+    //{
+    //    textMeshPro = GetComponent<TextMeshProUGUI>();
+    //    rectTransform = GetComponent<RectTransform>();
+
+    //    InitializeLetterText();
+    //}
+
+    private void InitializeLetterText()
     {
         string[] letters = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L",
             "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
         int letterIndex = Random.Range(0, letters.Length);
-        GetComponent<TextMeshProUGUI>().text = letters[letterIndex];
+        textMeshPro.text = letters[letterIndex];
     }
 
     public void ChangePosition(Vector3 newPos)
@@ -29,5 +51,11 @@ public class Letter : MonoBehaviour
             transform.position = Vector2.Lerp(startPos, newPos, elapsedTime);
             yield return null;
         }
+    }
+
+    public void SetUpLetter(float fontMultiplier, float width)
+    {   
+        rectTransform.sizeDelta = new Vector2(width, width);
+        textMeshPro.fontSize = fontSize*fontMultiplier;
     }
 }
